@@ -1,2 +1,2 @@
-# vue-core
-vue核心原理实现
+# vue-learn
+vue相关的一些学习
