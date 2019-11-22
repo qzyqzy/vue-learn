@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+	</head>
+
+	<body>
+		<div id="app"></div>
+	</body>
+	<script type="text/javascript">
+		var tempSubscript = '';
+		/* 观察者 */
+		function Observer() {
+			this.observers = [];
+		}
+		Observer.prototype.notify = function() {
+			for(let i = 0; i < this.observers.length; i++) {
+				this.observers[i].updata();
+			}
+		};
+		Observer.prototype.subscirpt = function() {
+			this.observers.push(tempSubscript);
+		}
+		/* 可观察对象 具备事件触发的能力 */
+		function Observerable(propName, node, data) {
+			this.$node = node;
+			this.$propName = propName;
+			this.$data = data;
+		}
+
+		Observerable.prototype.updata = function() {
+			if(this.$node.nodeType == 1) {
+				// input节点
+				this.$node.value = this.$data[this.$propName];
+			} else if(this.$node.nodeType == 3) {
+				this.$node.nodeValue = this.$data[this.$propName];
+			}
+		}
+		/* MVVM为构造函数，接收 opotions 对象*/
+		function MVVM(options) {
+			this.$options = options;
+			this.$el = options.el;
+			this.$data = options.data; //接收到的为一个函数
+			this.$template = options.template;
+			this.$$data = this.$data(); //接收到的为一个对象,包含所有数据
+			// 			console.log(this.$$data)
+			// 			console.log(this.$options)
+			// 			console.log(this.$template)
+
+			// 1: 监视属性,遍历对象
+			this.init();
+		};
+		MVVM.prototype.init = function() {
+			// 遍历对象
+			this.traverseObj(this.$$data, this.$$data.text);
+			// 解析dom
+			this.compDom(this.$template, this.$$data);
+		};
+		MVVM.prototype.compDom = function(temstr, data) {
+			// 将获取到的字符插入到DOM中
+			var elDom = document.querySelector(this.$el);
+			elDom.innerHTML = temstr;
+			// 分析dom 获取其中的标记
+			// console.log(elDom)
+			var nodes = elDom.children[0].childNodes;
+			var regText = /.*\{\{(.*)\}\}.*/;
+			var regV = /^v-(.*)$/;
+			// console.log(nodes);
+			for(var i = 0; i < nodes.length; i++) {
+				// console.log(nodes)
+				let nodeDom = nodes[i];
+				// console.log(nodeDom)
+				if(nodeDom.nodeType == 1) {
+					// input节点  v-on:click  v-model 
+					console.dir(nodeDom)
+					let attrs = nodeDom.attributes;
+					for(var j = 0; j < attrs.length; j++) {
+						// var attrs   // name  value
+						var attr = attrs[j];
+						var vResult = regV.exec(attr.name);
+						if(vResult) {
+							// 							console.log('匹配',attr.name,attr.value,vResult);
+							// 							console.log(vResult[1])
+							// vResult[1] ==> model
+							// 根据不同指令做相应的处理 函数 以相应的指令做key
+							this.moduleAction[vResult[1]](attr.value, nodeDom, data);
+
+						}
+
+					}
+
+				} else if(nodeDom.nodeType == 3) {
+					// text节点
+					// console.log(nodeDom)
+					var result = regText.exec(nodeDom.nodeValue);
+					if(result) {
+						// 获取结果与this.$$data 匹配
+						// 触发获取
+						var propsName = result[1].trim();
+						this.textMatch(propsName, nodeDom)
+						// console.log(propsName)
+					}
+
+				}
+			}
+
+		}
+		MVVM.prototype.moduleAction = {
+			model: function(propName, node, data) {
+				tempSubscript = new Observerable(propName, node, data)
+				node.value = data[propName];
+				node.addEventListener('input', function(e) {
+					data[propName] = e.target.value;
+				})
+			}
+		}
+		MVVM.prototype.textMatch = function(propName, node) {
+			/* 1：创建存储信息的行为 可观测者对象 
+			   2：将其挂载全局
+			   3：触发get函数 并从全局触发 1
+			*/
+			tempSubscript = new Observerable(propName, node, this.$$data)
+			// console.log('获取到为本节点',propName)
+			// 替换当前node的值,
+			node.nodeValue = this.$$data[propName];
+		}
+
+		MVVM.prototype.traverseObj = function(obj, tempValue) {
+			for(var key in obj) {
+				// 创建观察者
+				var observerOwner = new Observer();
+				Object.defineProperty(obj, key, {
+					set: function(value) {
+						tempValue = value;
+						console.log('set触发了');
+						observerOwner.notify();
+						// 数据改变  更新观察者中的所有可观察对象中的结点
+					},
+					get: function() {
+						console.log('get触发了');
+						if(tempSubscript) {
+							observerOwner.subscirpt();
+							tempSubscript = '';
+						}
+						return tempValue;
+						// 获取时触发 当前结点关联可观察对象,并加入观察者中
+					}
+				})
+			}
+		}
+		let mvvm = new MVVM({
+			el: '#app',
+			data() {
+				return {
+					text: 'abc',
+				}
+			},
+			template: `<div><input type="text" v-model="text" />{{text}}</div>`
+		})
+	</script>
+
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>vue 核心源码</title>
+	</head>
+
+	<body>
+		<div id="app">
+
+		</div>
+	</body>
+	<script>
+		/* 
+				 观察者  包含可观察对象  订阅与发布方法
+				 */
+		var tempSubscript = ''; //存储可观察者对象,方便加入到观察者队列中
+		function Observer() {
+			this.$queue = [];
+		}
+		/* 可观察者对象加入到观察者队列中 */
+		Observer.prototype.subscirpt = function() {
+			this.$queue.push(tempSubscript);
+		};
+		/* 通知队列中的可观察者对象更新结点内容 */
+		Observer.prototype.notify = function() {
+			for(let i = 0; i < this.$queue.length; i++) {
+				this.$queue[i].update();
+			}
+		}
+
+		/* 
+			可观测者对象
+			包含更新方法 
+		*/
+		function Observerable(propName, node, data) {
+			this.$propName = propName;
+			this.$node = node;
+			this.$data = data;
+		}
+		Observerable.prototype.update = function() {
+			if(this.$node.nodeType == 1) {
+				// input节点
+				this.$node.value = this.$data[this.$propName];
+			} else if(this.$node.nodeType == 3) {
+				this.$node.nodeValue = this.$data[this.$propName];
+			} else {
+				// ...
+			}
+		}
+		/* 
+			创建构造函数 参数为对象
+			获取对象中的所有数据
+		 */
+		function MVVM(mvvmObj) {
+			this.$mvvmObj = mvvmObj;
+			this.$el = mvvmObj.el;
+			this.$data = mvvmObj.data; // 此时接收到的为函数 fn
+			this.$$data = this.$data(); // 执行 返回 包含数据的对象
+			this.$template = mvvmObj.template;
+			// 			console.log(this.$el)
+			// 			console.log(this.$$data)
+			// 			console.log(this.$template)
+			this.initMvvm(); //  初始化操作
+		}
+		/* 初始化操作 */
+		MVVM.prototype.initMvvm = function() {
+			this.traverseObj(this.$$data, this.$$data['name']); //遍历对象 参数为对象、值 这里为了方便直接输入改对象中的属性值
+			this.compileDom(this.$el, this.$template, this.$$data); // 解析dom	
+		}
+		MVVM.prototype.traverseObj = function(obj, propNameValue) {
+			// console.log(obj,propNameValue)
+			for(var key in obj) {
+				/* 
+					为每一个属性创建一个观察者 
+					set函数触发时 将可观察对象加入到观察者中
+					get函数触发时 执行可关注发布模式，可观察者对象更新
+				 */
+				var observer = new Observer();
+				Object.defineProperty(obj, key, {
+					get: function() {
+						console.log('触发get');
+						if(tempSubscript) {
+							observer.subscirpt();
+							tempSubscript = '';
+						}
+						return propNameValue
+					},
+					set: function(value) {
+						console.log('触发set')
+						propNameValue = value;
+						observer.notify();
+					}
+				})
+			}
+		}
+		/* 
+		    解析dom
+			区分  input结点  与 text结点
+			并区分指令  如 v-model  v-on:click 等
+		*/
+		MVVM.prototype.compileDom = function(ele, temStr, data) {
+			/* console.log(temStr,data) */
+			// 获取页面中的元素并将template字符串插入其中 再获取其中的结点
+			var vueDom = document.querySelector(ele);
+			vueDom.innerHTML = temStr;
+			// console.dir(vueDom);
+			var domList = vueDom.children[0].childNodes;
+			var regText = /.*\{\{(.*)\}\}.*/; //匹配文本结点
+			var regV = /^v-(.*)$/; //匹配属性 v-
+			for(var i = 0; i < domList.length; i++) {
+				console.dir(domList[i]);
+				// 根据 nodeType 区分不同的结点
+				let nodeEle = domList[i];
+				if(nodeEle.nodeType == 1) {
+					// input 结点 获取属性 type="text" placeholder="姓名" v-model="name" 属性值都包含name value
+					var result = nodeEle.attributes;
+					// console.log(result)
+					if(result) {
+						for(var j = 0; j < result.length; j++) {
+							// 获取v-model 中的model
+							//根据不同指令 v-做相应的处理 
+							// 以相应的指令做key 执行不同的方法
+							var attrV = regV.exec(result[j].name);
+							// console.log(attrV)
+							if(attrV) {
+								// console.log(attrV[1])
+								this.moduleAction[attrV[1]](result[j].value, nodeEle, data)
+							}
+						}
+					}
+				} else if(nodeEle.nodeType == 3) {
+					// text结点获取 nodeValue
+					var result = regText.exec(nodeEle.nodeValue); // 返回值  第一位为匹配值 第二位 获取值
+					// 获取到的值要去this.$$data匹配 触发get 
+					// console.log(result[1])
+					if(result) {
+						this.propNameMatch(result[1], nodeEle);
+					}
+				} else {
+					//...
+				}
+			}
+		}
+		MVVM.prototype.propNameMatch = function(propName, nodeEle) {
+			// 此时创建改结点的观察者对象
+			// 观察者对象全局存储
+			// 与this.$$data匹配 触发get函数 触发get函数时 将该节点的可观察者对象加入到观察者队列中;
+			tempSubscript = new Observerable(propName, nodeEle, this.$$data);
+			nodeEle.nodeValue = this.$$data[propName];
+		}
+		MVVM.prototype.moduleAction = {
+			// v-model 指令  监听该dom 值改变时 
+			// 结点初始值时创建改结点的观察者对象
+			// 
+			model: function(propName, node, data) {
+				tempSubscript = new Observerable(propName, node, data);
+				node.value = data[propName]; // 触发get函数 将该节点的可观察者对象加入到观察者队列中
+				node.addEventListener('input', function(e) {
+					data[propName] = e.target.value; // 触发set函数 
+				})
+			}
+		}
+		var mvvm = new MVVM({
+			el: '#app',
+			data() {
+				return {
+					name: 'xqzi',
+				}
+			},
+			template: `<div><input type="text" placeholder="姓名" v-model="name">{{name}}</div>`
+		})
+	</script>
+
+</html>

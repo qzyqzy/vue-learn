@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+	</head>
+
+	<body>
+		<div id="app"></div>
+	</body>
+	<script type="text/javascript" src="myVue.js"></script>
+	<script type="text/javascript">
+		let mvvm = new MyVue({
+			el: '#app',
+			data() {
+				return {
+					text: 12345
+				}
+			},
+			template: `<div><input type="text" v-model="text" />{{text}}</div>`
+		})
+		//console.log(mvvm.$data.text)
+
+		// this代理的作用 可以直接访问数据
+		//console.log(mvvm.text)
+		//console.log(mvvm.text)
+		mvvm.text = 79
+	</script>
+
+</html>
