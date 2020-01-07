@@ -35,70 +35,70 @@
 </template>
 
 <script type="text/ecmascript-6">
-  import Slider from 'base/slider/slider'
-  import Loading from 'base/loading/loading'
-  import Scroll from 'base/scroll/scroll'
-  import {getRecommend, getDiscList} from 'api/recommend'
-  import {playlistMixin} from 'common/js/mixin'
-  import {ERR_OK} from 'api/config'
-  import {mapMutations} from 'vuex'
+port Slider from 'base/slider/slider'
+port Loading from 'base/loading/loading'
+port Scroll from 'base/scroll/scroll'
+port { g etRecommend, getDiscList  } from 'api/recommend'
+port { p laylistMixin  } from 'common/js/mixin'
+port { E RR_OK  } from 'api/config'
+port { m apMutations  } from 'vuex'
 
-  export default {
+port default {
     mixins: [playlistMixin],
     data() {
-      return {
-        recommends: [],
-        discList: []
-      }
+          return {
+                recommends: [],
+                discList: []
+          }
     },
     created() {
-      this._getRecommend()
+          this._getRecommend()
 
-      this._getDiscList()
+          this._getDiscList()
     },
     methods: {
-      handlePlaylist(playlist) {
-        const bottom = playlist.length > 0 ? '60px' : ''
+          handlePlaylist(playlist) {
+                const bottom = playlist.length > 0 ? '60px' : ''
 
-        this.$refs.recommend.style.bottom = bottom
-        this.$refs.scroll.refresh()
-      },
-      loadImage() {
-        if (!this.checkloaded) {
-          this.checkloaded = true
-          this.$refs.scroll.refresh()
-        }
-      },
-      selectItem(item) {
-        this.$router.push({
-          path: `/recommend/${item.dissid}`
-        })
-        this.setDisc(item)
-      },
-      _getRecommend() {
-        getRecommend().then((res) => {
-          if (res.code === ERR_OK) {
-            this.recommends = res.data.slider
-          }
-        })
-      },
-      _getDiscList() {
-        getDiscList().then((res) => {
-          if (res.code === ERR_OK) {
-            this.discList = res.data.list
-          }
-        })
-      },
-      ...mapMutations({
-        setDisc: 'SET_DISC'
-      })
+                this.$refs.recommend.style.bottom = bottom
+                this.$refs.scroll.refresh()
+          },
+          loadImage() {
+                if (!this.checkloaded) {
+                      this.checkloaded = true
+                      this.$refs.scroll.refresh()
+                }
+          },
+          selectItem(item) {
+                this.$router.push({
+                      path: `/recommend/${item.dissid}`
+                })
+                this.setDisc(item)
+          },
+          _getRecommend() {
+                getRecommend().then((res) => {
+                      if (res.code === ERR_OK) {
+                            this.recommends = res.data.slider
+                      }
+                })
+          },
+          _getDiscList() {
+                getDiscList().then((res) => {
+                      if (res.code === ERR_OK) {
+                            this.discList = res.data.list
+                      }
+                })
+          },
+          ...mapMutations({
+                setDisc: 'SET_DISC'
+          })
     },
     components: {
-      Slider,
-      Loading,
-      Scroll
+          Slider,
+          Loading,
+          Scroll
     }
-  }
+
 </script>
 
 <style scoped lang="stylus" rel="stylesheet/stylus">
