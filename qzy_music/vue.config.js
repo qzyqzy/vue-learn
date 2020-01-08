@@ -6,7 +6,7 @@ module.exports = {
         'common': '@/common',
         'components': '@/components',
         'views': '@/views',
-        'scss': '@/assets/scss',
+        'scss': '@/assets/scss'
       }
     }
   }
