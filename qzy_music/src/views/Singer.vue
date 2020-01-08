@@ -1,6 +1,6 @@
 <template>
   <div class="recommend">
-    推荐
+    歌手
   </div>
 </template>
 <script>

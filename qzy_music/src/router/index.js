@@ -3,15 +3,29 @@ import VueRouter from 'vue-router'
 
 Vue.use(VueRouter)
 
-const routes = [
-  {
+const routes = [{
     path: '/',
     redirect: '/recommend'
   },
   {
     path: '/recommend',
     name: 'recommend',
-    component: () => import(/* webpackChunkName: "home" */ '../views/Home.vue')
+    component: () => import( /* webpackChunkName: "recommend" */ 'views/Recommend.vue')
+  },
+  {
+    path: '/singer',
+    name: 'singer',
+    component: () => import( /* webpackChunkName: "singer" */ 'views/Singer.vue')
+  },
+  {
+    path: '/rank',
+    name: 'rank',
+    component: () => import( /* webpackChunkName: "rank" */ 'views/Rank.vue')
+  },
+  {
+    path: '/search',
+    name: 'search',
+    component: () => import( /* webpackChunkName: "search" */ 'views/Search.vue')
   }
 ]
 

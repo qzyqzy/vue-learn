@@ -1,6 +1,6 @@
 <template>
   <div class="recommend">
-    推荐
+    排行
   </div>
 </template>
 <script>
