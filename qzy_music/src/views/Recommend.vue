@@ -27,6 +27,7 @@
             </template>
           </ul>
         </div>
+        <div class="loading-container" v-show="!discList.length"><m-load></m-load></div>
       </div>
     </m-scroll>
   </div>
@@ -34,13 +35,15 @@
 <script>
 import MSlider from 'components/m-slider/m-slider';
 import MScroll from 'components/m-scroll/m-scroll';
+import MLoad from 'components/m-load/m-load';
 import { getRecommend, getDiscList } from 'common/api/recommend';
 import { ERR_OK } from 'common/api/config';
 export default {
   name: 'recommend',
   components: {
     MSlider,
-    MScroll
+    MScroll,
+    MLoad
   },
   data() {
     return {
