@@ -58,6 +58,11 @@ export default {
         probeType: this.probeType,
         click: this.click
       });
+      if (this.listenScroll) {
+        this.scroll.on('scroll', pos => {
+          this.$emit('scroll', pos);
+        });
+      }
     },
     disable() {
       this.scroll && this.scroll.disable();
@@ -67,6 +72,12 @@ export default {
     },
     refresh() {
       this.scroll && this.scroll.refresh();
+    },
+    scrollTo() {
+      this.scroll && this.scroll.scrollTo.apply(this.scroll, arguments);
+    },
+    scrollToElement() {
+      this.scroll && this.scroll.scrollToElement.apply(this.scroll, arguments);
     }
   }
 };
