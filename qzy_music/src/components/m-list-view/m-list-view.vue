@@ -74,7 +74,6 @@ export default {
     },
     diff(newVal) {
       let fixedTop = newVal > 0 && newVal < TITLE_HEIGHT ? newVal - TITLE_HEIGHT : 0;
-      console.log(this.fixedTop, fixedTop);
       if (this.fixedTop === fixedTop) {
         return;
       }
