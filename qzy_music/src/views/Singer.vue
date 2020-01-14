@@ -1,11 +1,15 @@
 <template>
-  <div class="singer"><m-list-view :data="singerList"></m-list-view></div>
+  <div class="singer">
+    <m-list-view @onList="onList" :data="singerList"></m-list-view>
+    <router-view></router-view>
+  </div>
 </template>
 <script>
 import { ERR_OK } from 'common/api/config';
 import { getSingerList } from 'common/api/singer';
 import MListView from 'components/m-list-view/m-list-view.vue';
 import Singer from 'common/js/singer';
+import {mapMutations} from 'vuex'
 const HOT_SINGER_LEN = 10;
 const HOT_NAME = '热门';
 export default {
@@ -22,6 +26,13 @@ export default {
     this.getSingerData();
   },
   methods: {
+    ...mapMutations(['setSinger']),
+    onList(item){
+      this.setSinger(item)
+      this.$router.push({
+        path:`/singer/${item.id}`
+      })
+    },
     normalizeSinger(list) {
       if (!list) {
         return;

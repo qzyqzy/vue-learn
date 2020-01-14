@@ -16,6 +16,6 @@ export default {
     MHeader,
     MTab
   }
-};
+}
 </script>
 <style lang="scss"></style>

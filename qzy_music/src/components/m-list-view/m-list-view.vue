@@ -6,7 +6,7 @@
           <h2 class="list-group-title">{{ group.title }}</h2>
           <uL>
             <template v-for="(item, cIndex) in group.items">
-              <li :key="'' + index + cIndex" class="list-group-item">
+              <li @click="onList(item)" :key="index + cIndex" class="list-group-item">
                 <img class="avatar" v-lazy="item.avatar" />
                 <span class="name">{{ item.name }}</span>
               </li>
@@ -107,6 +107,9 @@ export default {
     this.touch = {};
   },
   methods: {
+    onList(item) {
+      this.$emit('onList', item);
+    },
     onShortcutTouchStart(e) {
       let anchorIndex = getData(e.target, 'index');
       let firstTouch = e.touches[0];
