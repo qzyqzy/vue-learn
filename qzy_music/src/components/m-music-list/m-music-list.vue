@@ -12,7 +12,7 @@
     </div>
     <div class="bg-layer" ref="layer"></div>
     <m-scroll :data="songs" :listen-scroll="true" :probe-type="3" @scroll="onSongListScroll" class="list" ref="list">
-      <div class="song-list-wrapper"><m-song-list :songs="songs"></m-song-list></div>
+      <div class="song-list-wrapper"><m-song-list :songs="songs" @onSong="onSong"></m-song-list></div>
       <div class="loading-container" v-show="!songs.length"><m-load></m-load></div>
     </m-scroll>
   </div>
@@ -23,6 +23,7 @@ import MScroll from 'components/m-scroll/m-scroll';
 import MSongList from 'components/m-song-list/m-song-list';
 import MLoad from 'components/m-load/m-load';
 import { prefixStyle } from 'common/js/dom.js';
+import { mapActions } from 'vuex';
 const transform = prefixStyle('transform');
 const RESERVED_HEIGHT = 40;
 export default {
@@ -87,11 +88,15 @@ export default {
     this.$refs.list.$el.style.top = `${this.imageHeight}px`;
   },
   methods: {
+    ...mapActions(['onPlay']),
     back() {
       this.$router.back();
     },
     onSongListScroll(pos) {
       this.scrollY = pos.y;
+    },
+    onSong(item, index) {
+      this.onPlay({ list: this.songs, index });
     }
   }
 };

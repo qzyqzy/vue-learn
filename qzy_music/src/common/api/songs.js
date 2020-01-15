@@ -1,4 +1,8 @@
 import axios from 'axios'
+import {
+  guid
+} from 'common/js/config'
+
 // 获取vkey
 export function getSongVkey(songmid) {
   const url = 'https://c.y.qq.com/base/fcgi-bin/fcg_music_express_mobile3.fcg'
@@ -11,7 +15,7 @@ export function getSongVkey(songmid) {
     inCharset: 'utf8',
     outCharset: 'utf-8',
     notice: 0,
-    guid: 9918820956,
+    guid,
     platform: 'yqq',
     needNewCode: 0,
     cid: 205361747,

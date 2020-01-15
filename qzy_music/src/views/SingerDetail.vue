@@ -5,6 +5,7 @@
 <script>
 import { ERR_OK } from 'common/api/config';
 import { getSingerDetail } from 'common/api/singer';
+import { getSongVkey } from 'common/api/songs';
 import { createSong } from 'common/js/songs';
 import { mapGetters } from 'vuex';
 import MMusicList from 'components/m-music-list/m-music-list';
@@ -47,7 +48,11 @@ export default {
       list.forEach(item => {
         let { musicData } = item;
         if (musicData.songid && musicData.albummid) {
-          ret.push(createSong(musicData));
+          ret.push(createSong(musicData, ''));
+          // getSongVkey(musicData.songmid).then((res)=>{
+          //   let vKey=res.data.items[0].vkey
+
+          // })
         }
       });
       return ret;
