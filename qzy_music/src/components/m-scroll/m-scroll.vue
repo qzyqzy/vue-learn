@@ -1,5 +1,7 @@
 <template>
-  <div ref="wrapper"><slot></slot></div>
+  <div ref="wrapper">
+    <slot></slot>
+  </div>
 </template>
 
 <script>
@@ -54,6 +56,9 @@ export default {
   },
   methods: {
     initScroll() {
+      if(!this.$refs.wrapper){
+        return 
+      }
       this.scroll = new BScroll(this.$refs.wrapper, {
         probeType: this.probeType,
         click: this.click
