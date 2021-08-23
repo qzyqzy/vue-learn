@@ -3,7 +3,6 @@ let Vue;
 
 // 插件必须提供的 install 方法，接收的参数为 Vue
 function install(_vue) {
-  console.log(12);
   Vue = _vue;
   applyMixin(Vue);
 }
