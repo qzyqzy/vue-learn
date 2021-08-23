@@ -15,6 +15,7 @@ function applyMixin(Vue) {
 }
 // 获取根组件注入的 store 实例、为每个组件注册 $store
 function vuexInit() {
+  console.log(123);
   let options = this.$options;
   if (options.store) {
     this.$store =
