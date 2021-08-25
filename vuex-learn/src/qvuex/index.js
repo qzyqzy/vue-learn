@@ -26,7 +26,6 @@ function vuexInit() {
 
 class Store {
   constructor(options) {
-    console.log("options", options);
     // 借助 Vue 的 data 将 state 中的数据变为响应式的
     // 结合 get state
     // 借助 computed 实现 getters
