@@ -1,6 +1,10 @@
 <template>
   <div id="app">
-    <p>{{ $store.count }}</p>
+    <p>count {{ $store.state.count }}</p>
+    <p>getters {{ $store.getters.doubleCount }}</p>
+    <button @click="$store.commit('add', 2)">同步修改</button>
+    <p></p>
+    <button @click="$store.dispatch('add', 3)">异步修改</button>
   </div>
 </template>
 
@@ -8,7 +12,7 @@
 export default {
   name: "App",
   mounted() {
-    console.log(this.$store);
+    console.log(this.$store, "app");
   },
 };
 </script>
