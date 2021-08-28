@@ -1,7 +1,7 @@
 // 将 install 中传递的 vue 全局保存
 let Vue;
 
-// 插件必须提供的 install 方法，接收的参数为 Vue构造函数
+// 插件必须提供的 install 方法，接收的参数为 Vue 构造函数
 function install(_vue) {
   Vue = _vue;
   applyMixin(Vue);
@@ -16,10 +16,10 @@ function applyMixin(Vue) {
 function vuexInit() {
   let options = this.$options;
   if (options.store) {
-    this.$store =
-      typeof options.store === "function" ? options.store() : options.store;
+    // 可以判断是否为函数 这里简单写
+    // typeof options.store === "function" ? options.store()
+    this.$store = options.store;
   } else if (options.parent && options.parent.$store) {
-    // this.$parent || options.parent  都可以
     this.$store = options.parent.$store;
   }
 }
@@ -32,6 +32,7 @@ class Store {
 
     // 收集依赖
     this.modules = new ModuleCollection(options);
+    console.log("this.modules", this.modules);
     let state = this.modules.root.state;
 
     // 安装依赖
@@ -57,6 +58,7 @@ class Store {
     this.mutations[name].forEach((fn) => fn(payload));
   };
   dispatch = (name, payload) => {
+    // 其实还要判断 如果只有一个事件触发、执行即可，多个的话会使用 Promise.all
     this.actions[name].forEach((fn) => fn(payload));
   };
 }
@@ -90,17 +92,32 @@ class ModuleCollection {
     this.register([], options);
   }
   register(path, rootModule) {
+    // 生成一个依赖的实例
     let newModule = new Module(rootModule);
     if (!this.root) {
+      // 第一个是根元素
       this.root = newModule;
     } else {
+      // 不是根元素就要查找到当前元素对应的父元素
+      // 比如现在的 path 为 ["a"] curModules 即为当前元素
+      // 当为 ["a", "b", "c"] 时，先 path.slice(0, -1) = ["a", "b"]
+      // 通过 reduce 、初始值为 this.root 往下查找 查找到父元素
+
       let curModules = path.slice(0, -1).reduce((root, current) => {
         return root._children[current];
       }, this.root);
+      // path[path.length - 1]  取到当前元素
       curModules._children[path[path.length - 1]] = newModule;
     }
+    // 如果当前模块存在子模块 递归
     if (rootModule.modules) {
       forEachValue(rootModule.modules, (module, moduleName) => {
+        // 这里需要注意的是 path
+        // 比如 a 下 存在 b 模块、b 模块下又存在 c
+        // 那么每次循环 path 的路径为
+        // 1 [].concat('a') = ["a"]
+        // 2 ["a"].concat('b') = ["a", "b"]
+        // 3 ["a", "b"].concat('c') = ["a", "b", "c"]
         this.register(path.concat(moduleName), module);
       });
     }
@@ -113,7 +130,6 @@ class ModuleCollection {
 }
 
 // 单个模块
-
 class Module {
   constructor(rawModule) {
     this._children = Object.create(null);
@@ -144,6 +160,7 @@ class Module {
 function installModule(store, rootState, path, rawModule) {
   // 处理 state
   if (path.length) {
+    // 处理嵌套关系
     let parentState = path.slice(0, -1).reduce((root, curState) => {
       return root[curState];
     }, rootState);
@@ -172,6 +189,7 @@ function installModule(store, rootState, path, rawModule) {
   // 将 actions 存储到 actions
   rawModule.forEachAction((action, key) => {
     // 如果需要配置命名空间 设置 key
+    // 源码中的函数均为 promise
     let actionsList = store.actions[key] || (store.actions[key] = []);
     actionsList.push((payload) => {
       action(store, payload);
