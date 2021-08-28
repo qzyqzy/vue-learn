@@ -11,20 +11,17 @@ let store = new Vuex.Store({
   },
   getters: {
     rootDoubleCount(state) {
-      console.log(1);
       return state.count.repeat(2);
     },
   },
   mutations: {
     add(state, payload) {
-      console.log("root-add");
       state.count += payload;
     },
   },
   actions: {
     add({ commit }, payload) {
       setTimeout(() => {
-        console.log("root-async-add");
         commit("add", payload);
       }, 1000);
     },
@@ -37,7 +34,6 @@ let store = new Vuex.Store({
       // mutations 中严格需要放置同步的修改
       mutations: {
         add(state, value) {
-          console.log("a-root");
           state.count += value;
         },
       },
@@ -51,7 +47,6 @@ let store = new Vuex.Store({
           actions: {
             add({ commit }, payload) {
               setTimeout(() => {
-                console.log("c-async-add");
                 commit("add", payload);
               }, 1000);
             },
@@ -64,7 +59,6 @@ let store = new Vuex.Store({
       // mutations 中严格需要放置同步的修改
       mutations: {
         add(state, value) {
-          console.log(2);
           state.count += value;
         },
       },
@@ -75,6 +69,11 @@ let store = new Vuex.Store({
 store.registerModule("myModule", {
   state: {
     count: "myModule",
+  },
+  getters: {
+    db(state) {
+      return state.count + 1;
+    },
   },
 });
 export default store;

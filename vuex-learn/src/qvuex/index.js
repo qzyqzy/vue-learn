@@ -26,62 +26,22 @@ function vuexInit() {
 
 class Store {
   constructor(options) {
-    // 借助 Vue 的 data 将 state 中的数据变为响应式的
-    // 结合 get state
-    // 借助 computed 实现 getters
-    let state = options.state;
-    this.getters = {};
     this.mutations = {};
     this.actions = {};
-    this.vm = new Vue({
-      data: {
-        state,
-      },
-      // computed,
-    });
-    // let getters = options.getters;
+    this._wrappedGetters = {};
 
-    // let computed = {};
     // 收集依赖
     this.modules = new ModuleCollection(options);
+    let state = this.modules.root.state;
+
     // 安装依赖
-    installModule(this, this.state, [], this.modules.root);
-    // // 循环 getters
-    // forEachValue(getters, (fn, key) => {
-    //   // 这样写也可以 但没有利用计算属性的缓存
-    //   // Object.defineProperty(this.getters, key, {
-    //   //   get: () => {
-    //   //     return fn(this.state);
-    //   //   },
-    //   //   enumerable: true,
-    //   // });
+    installModule(this, state, [], this.modules.root);
 
-    //   // 计算属性绑定时计算值
-    //   computed[key] = () => {
-    //     return fn(this.state);
-    //   };
-
-    // // mutations
-    // // 因为是箭头函数，this 指向不用特殊处理
-    // let mutations = options.mutations;
-    //
-    // forEachValue(mutations, (fn, key) => {
-    //   // 函数劫持
-    //   this.mutations[key] = (data) => {
-    //     fn(this.state, data);
-    //   };
-    // });
-    // // actions
-    // let actions = options.actions;
-    //
-    // forEachValue(actions, (fn, key) => {
-    //   this.actions[key] = (data) => {
-    //     fn(this, data);
-    //   };
-    // });
+    // state 与 getters 处理
+    resetStoreVM(this, state);
   }
   get state() {
-    return this.vm.state;
+    return this._vm.state;
   }
   // 动态注册
   registerModule(path, rawModule) {
@@ -91,6 +51,7 @@ class Store {
     this.modules.register(path, rawModule);
     // 安装依赖
     installModule(this, this.state, path, this.modules.get(path));
+    resetStoreVM(this, rawModule.state);
   }
   commit = (name, payload) => {
     this.mutations[name].forEach((fn) => fn(payload));
@@ -98,6 +59,29 @@ class Store {
   dispatch = (name, payload) => {
     this.actions[name].forEach((fn) => fn(payload));
   };
+}
+// 借助 Vue 的 data 将 state 中的数据变为响应式的
+// 结合 get state
+// 借助 computed 实现 getters
+function resetStoreVM(store, state) {
+  store.getters = {};
+  var wrappedGetters = store._wrappedGetters;
+  var computed = {};
+  forEachValue(wrappedGetters, function (fn, key) {
+    computed[key] = () => fn();
+    Object.defineProperty(store.getters, key, {
+      get: function () {
+        return store._vm[key];
+      },
+      enumerable: true, // for local getters
+    });
+  });
+  store._vm = new Vue({
+    data: {
+      state: state,
+    },
+    computed: computed,
+  });
 }
 
 // 模块依赖收集
@@ -139,6 +123,21 @@ class Module {
   getChild(key) {
     return this._children[key];
   }
+  forEachGetters(fn) {
+    if (this._rawModule.getters) {
+      forEachValue(this._rawModule.getters, fn);
+    }
+  }
+  forEachMutations(fn) {
+    if (this._rawModule.mutations) {
+      forEachValue(this._rawModule.mutations, fn);
+    }
+  }
+  forEachAction(fn) {
+    if (this._rawModule.actions) {
+      forEachValue(this._rawModule.actions, fn);
+    }
+  }
 }
 
 // 安装模块
@@ -151,52 +150,38 @@ function installModule(store, rootState, path, rawModule) {
     Vue.set(parentState, path[path.length - 1], rawModule.state);
   }
 
-  // 处理 getters
-  let getters = rawModule._rawModule.getters;
-  if (getters) {
-    forEachValue(getters, (fn, key) => {
-      // 不是直接赋值 而是通过此方法修改可扩展
-      Object.defineProperty(store.getters, key, {
-        get: () => {
-          return fn(rawModule.state);
-        },
-        enumerable: true,
-      });
-    });
-  }
+  // 将 getters 存储到 _wrappedGetters
+  rawModule.forEachGetters((getter, key) => {
+    // 如果需要配置命名空间
+    // 此时的 getter 对应的属性 key 就可以处理为 a/add
+    // key = 'a/add'
+    store._wrappedGetters[key] = () => {
+      return getter(rawModule.state);
+    };
+  });
 
-  // 处理 mutations
-  let mutations = rawModule._rawModule.mutations;
-  if (mutations) {
-    forEachValue(mutations, (fn, mutationName) => {
-      let mutationsList = store.mutations[mutationName];
-      if (!mutationsList) {
-        mutationsList = store.mutations[mutationName] = [];
-      }
-      mutationsList.push((payload) => {
-        fn(rawModule.state, payload);
-      });
+  // 将 mutations 存储到 mutations
+  rawModule.forEachMutations((mutation, key) => {
+    // 如果需要配置命名空间 设置 key
+    let mutationsList = store.mutations[key] || (store.mutations[key] = []);
+    mutationsList.push((payload) => {
+      mutation(rawModule.state, payload);
     });
-  }
+  });
 
-  // 处理 actions
-  // 处理 mutations
-  let actions = rawModule._rawModule.actions;
-  if (actions) {
-    forEachValue(actions, (fn, actionsName) => {
-      let actionsList = store.actions[actionsName];
-      if (!actionsList) {
-        actionsList = store.actions[actionsName] = [];
-      }
-      actionsList.push((payload) => {
-        fn(store, payload);
-      });
+  // 将 actions 存储到 actions
+  rawModule.forEachAction((action, key) => {
+    // 如果需要配置命名空间 设置 key
+    let actionsList = store.actions[key] || (store.actions[key] = []);
+    actionsList.push((payload) => {
+      action(store, payload);
     });
-  }
+  });
 
   // 便利子元素
   forEachValue(rawModule._children, (curRawModule, moduleName) => {
     installModule(store, rootState, path.concat(moduleName), curRawModule);
+    resetStoreVM(store, curRawModule.state);
   });
 }
 
