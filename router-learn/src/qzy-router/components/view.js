@@ -13,7 +13,6 @@ export default {
     // used by devtools to display a router-view badge
     data.routerView = true;
     const route = parent.$route;
-    console.log(route, "route");
     // determine current view depth, also check to see if the tree
     // has been toggled inactive but kept-alive.
     let depth = 0;
@@ -30,7 +29,6 @@ export default {
 
     const matched = route.matched[depth];
     const component = matched && matched.component;
-    console.log(component, "component");
     // render empty node if no matched route or no config component
     if (!matched || !component) {
       return h();

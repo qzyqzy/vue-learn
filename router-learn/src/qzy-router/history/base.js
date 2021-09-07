@@ -7,7 +7,7 @@ export class History {
   }
   transitionTo(location, onComplete) {
     let route = this.router.match(location);
-    console.log(route, "route");
+    this.updateRoute(route);
     onComplete && onComplete();
   }
   updateRoute(route) {
