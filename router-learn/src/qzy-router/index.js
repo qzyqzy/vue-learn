@@ -19,6 +19,19 @@ class VueRouter {
         break;
     }
   }
+  init(app) {
+    let history = this.history;
+    let setupListeners = () => {
+      history.setupListeners();
+    };
+    history.transitionTo(history.getCurrentLocation(), setupListeners);
+    history.listen((route) => {
+      app._route = route;
+    });
+  }
+  match(location) {
+    return this.matcher.match(location);
+  }
 }
 VueRouter.install = install;
 
